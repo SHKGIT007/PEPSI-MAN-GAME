@@ -106,8 +106,8 @@ function ReferenceCartoonTree({ position, scale = 1 }) {
   return (
     <group position={position} scale={scale}>
       {/* Ground Shadow */}
-      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ellipseGeometry args={[2.2, 1.4]} />
+      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.64, 1]}>
+        <circleGeometry args={[2.2, 32]} />
         <meshBasicMaterial color="#224422" transparent opacity={0.4} />
       </mesh>
 
