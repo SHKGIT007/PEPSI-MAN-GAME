@@ -1,94 +1,53 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --- Custom 3D Lush Cartoon Tree (Matching Reference Image) ---
-function LushCartoonTree({ position, scale = 1 }) {
-  const foliageGroupRef = useRef();
+// --- Cartoon Tree Component Matching User Reference Image ---
+function ReferenceCartoonTree({ position, scale = 1 }) {
+  const groupRef = useRef();
+  // Load texture from public/cartoon_tree.png
+  const treeTexture = useTexture('/cartoon_tree.png');
 
-  // Gentle wind swaying animation
+  // Wind sway animation
   useFrame((state) => {
-    if (foliageGroupRef.current) {
+    if (groupRef.current) {
       const time = state.clock.elapsedTime;
-      foliageGroupRef.current.rotation.z = Math.sin(time * 1.8 + position[2]) * 0.04;
-      foliageGroupRef.current.rotation.x = Math.cos(time * 1.2 + position[0]) * 0.03;
+      groupRef.current.rotation.z = Math.sin(time * 1.5 + position[2]) * 0.03;
     }
   });
 
-  // Generate multi-layer foliage cloud puffs
-  const foliagePuffs = useMemo(() => {
-    const puffs = [];
-    // Top main dome
-    puffs.push({ pos: [0, 5.2, 0], radius: 1.8, color: '#66D136' });
-    puffs.push({ pos: [0, 5.6, 0.3], radius: 1.5, color: '#7CE643' });
-
-    // Middle Ring Puffs
-    const ringColors = ['#4EBD2A', '#66D136', '#3D9E20', '#7CE643'];
-    for (let i = 0; i < 8; i++) {
-      const angle = (i / 8) * Math.PI * 2;
-      const radiusOffset = 1.3 + (i % 2) * 0.4;
-      const x = Math.cos(angle) * radiusOffset;
-      const z = Math.sin(angle) * radiusOffset;
-      const y = 4.3 + (i % 3) * 0.3;
-      puffs.push({ pos: [x, y, z], radius: 1.3 + Math.random() * 0.4, color: ringColors[i % ringColors.length] });
-    }
-
-    // Lower Shadow Canopy Puffs
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2 + 0.3;
-      const x = Math.cos(angle) * 1.6;
-      const z = Math.sin(angle) * 1.6;
-      puffs.push({ pos: [x, 3.6, z], radius: 1.1 + Math.random() * 0.3, color: '#2B7A18' });
-    }
-
-    return puffs;
-  }, []);
-
   return (
     <group position={position} scale={scale}>
-      {/* --- Flared Wooden Roots Base --- */}
-      {[0, 1.2, 2.4, 3.6, 4.8].map((angle, idx) => (
-        <mesh
-          key={idx}
-          position={[Math.cos(angle) * 0.6, 0.2, Math.sin(angle) * 0.6]}
-          rotation={[0.3 * Math.sin(angle), angle, -0.4]}
-          castShadow
-        >
-          <cylinderGeometry args={[0.2, 0.45, 1.2, 8]} />
-          <meshStandardMaterial color="#6B4226" roughness={0.85} />
-        </mesh>
-      ))}
-
-      {/* --- Main Thick Wooden Trunk --- */}
-      <mesh position={[0, 1.8, 0]} castShadow>
-        <cylinderGeometry args={[0.65, 0.95, 3.4, 10]} />
-        <meshStandardMaterial color="#7A4B29" roughness={0.8} />
+      {/* 3D Base Ground Shadow */}
+      <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ellipseGeometry args={[2.2, 1.4]} />
+        <meshBasicMaterial color="#2B522C" transparent opacity={0.5} />
       </mesh>
 
-      {/* --- Spreading Upper Branches --- */}
-      <group position={[0, 3.2, 0]}>
-        <mesh position={[-0.6, 0.6, 0.3]} rotation={[0.2, 0, 0.5]} castShadow>
-          <cylinderGeometry args={[0.3, 0.45, 1.6, 8]} />
-          <meshStandardMaterial color="#7A4B29" roughness={0.8} />
+      {/* Front Facing Billboard Sprite (Main Image Match) */}
+      <group ref={groupRef} position={[0, 4.2, 0]}>
+        {/* Main Front Facing Tree Plane */}
+        <mesh>
+          <planeGeometry args={[7.5, 8.5]} />
+          <meshBasicMaterial
+            map={treeTexture}
+            transparent={true}
+            alphaTest={0.4}
+            side={THREE.DoubleSide}
+          />
         </mesh>
-        <mesh position={[0.6, 0.6, -0.3]} rotation={[-0.2, 0, -0.5]} castShadow>
-          <cylinderGeometry args={[0.3, 0.45, 1.6, 8]} />
-          <meshStandardMaterial color="#7A4B29" roughness={0.8} />
-        </mesh>
-        <mesh position={[0, 0.7, 0.6]} rotation={[-0.5, 0, 0]} castShadow>
-          <cylinderGeometry args={[0.28, 0.42, 1.5, 8]} />
-          <meshStandardMaterial color="#7A4B29" roughness={0.8} />
-        </mesh>
-      </group>
 
-      {/* --- Fluffy Cloud-Like Foliage Canopy --- */}
-      <group ref={foliageGroupRef}>
-        {foliagePuffs.map((puff, idx) => (
-          <mesh key={idx} position={puff.pos} castShadow receiveShadow>
-            <dodecahedronGeometry args={[puff.radius, 1]} />
-            <meshStandardMaterial color={puff.color} roughness={0.65} />
-          </mesh>
-        ))}
+        {/* Cross-Plane at 90 deg for 3D Volume */}
+        <mesh rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[7.5, 8.5]} />
+          <meshBasicMaterial
+            map={treeTexture}
+            transparent={true}
+            alphaTest={0.4}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
       </group>
     </group>
   );
@@ -111,12 +70,12 @@ export function VillageStage({ zOffset }) {
     const fenceList = [];
     const rockList = [];
 
-    // Dense lining of Lush Cartoon Trees matching user reference!
-    for (let i = 0; i < 28; i++) {
-      const z = -i * 7.5;
+    // Dense lining of Reference Cartoon Trees matching user image!
+    for (let i = 0; i < 26; i++) {
+      const z = -i * 8;
       const side = i % 2 === 0 ? -1 : 1;
-      const scale = 0.9 + (i % 3) * 0.15;
-      treeList.push({ side, xDist: 6.8 + (i % 3) * 0.7, z, scale });
+      const scale = 0.95 + (i % 3) * 0.15;
+      treeList.push({ side, xDist: 7.2 + (i % 3) * 0.8, z, scale });
     }
 
     // Cottages
@@ -210,9 +169,9 @@ export function VillageStage({ zOffset }) {
         </mesh>
       </group>
 
-      {/* --- Render Lush Cartoon Trees (Matching Reference Image) --- */}
+      {/* --- Render Reference Cartoon Trees (Matching Image 100%) --- */}
       {trees.map((t, idx) => (
-        <LushCartoonTree key={idx} position={[t.side * t.xDist, 0, t.z]} scale={t.scale} />
+        <ReferenceCartoonTree key={idx} position={[t.side * t.xDist, 0, t.z]} scale={t.scale} />
       ))}
 
       {/* Bushes */}
