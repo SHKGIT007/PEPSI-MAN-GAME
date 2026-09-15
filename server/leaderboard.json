@@ -1,0 +1,52 @@
+{
+  "leaderboards": [
+    {
+      "name": "PEPSI_HERO",
+      "score": 18500,
+      "distance": 3200,
+      "cans": 142,
+      "stage": "City"
+    },
+    {
+      "name": "PS1_LEGEND",
+      "score": 14200,
+      "distance": 2600,
+      "cans": 110,
+      "stage": "Village"
+    },
+    {
+      "name": "RETRO_RUNNER",
+      "score": 11800,
+      "distance": 2100,
+      "cans": 95,
+      "stage": "City"
+    },
+    {
+      "name": "SPEED_DEMON",
+      "score": 9400,
+      "distance": 1850,
+      "cans": 78,
+      "stage": "Village"
+    },
+    {
+      "name": "CAN_COLLECTOR",
+      "score": 7600,
+      "distance": 1500,
+      "cans": 62,
+      "stage": "Village"
+    },
+    {
+      "name": "FFF",
+      "score": 1598,
+      "distance": 182,
+      "cans": 7,
+      "stage": "Village",
+      "date": "2026-09-15T11:40:42.704Z"
+    }
+  ],
+  "globalStats": {
+    "totalGamesPlayed": 43,
+    "totalDistanceRun": 85582,
+    "totalCansCollected": 4897
+  }
+}
