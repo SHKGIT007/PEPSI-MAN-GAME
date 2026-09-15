@@ -6,6 +6,7 @@ import { CityStage } from './CityStage';
 import { Obstacles } from './Obstacles';
 import { Collectibles } from './Collectibles';
 import { SkyboxAndLighting } from './SkyboxAndLighting';
+import { ParticleEffects } from './ParticleEffects';
 import { soundManager } from './SoundEngine';
 import * as THREE from 'three';
 
@@ -258,6 +259,13 @@ function GameLoop({
         speed={speed}
       />
 
+      {/* 3D Particle Effects (Footstep Dust & Ambient Fireflies) */}
+      <ParticleEffects
+        stage={stage}
+        playerPos={{ x: lane * 2.5, y: isJumping ? 2 : 0.9, z: 0 }}
+        speed={speed}
+      />
+
       {/* Repeating Stage Track segments */}
       {stage === 'Village' ? (
         <>
@@ -283,7 +291,11 @@ function GameLoop({
 export function GameCanvas(props) {
   return (
     <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
-      <Canvas shadows camera={{ position: [0, 3.2, 5.5], fov: 60 }}>
+      <Canvas
+        shadows
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.25 }}
+        camera={{ position: [0, 3.2, 5.5], fov: 60 }}
+      >
         <React.Suspense fallback={null}>
           <GameLoop {...props} />
         </React.Suspense>
