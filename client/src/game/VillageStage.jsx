@@ -1,13 +1,99 @@
 import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
-// --- Cartoon Tree Component Matching User Reference Image ---
+// Procedural Canvas Texture generator for exact Cartoon Tree (Image Match)
+function getCartoonTreeTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+
+  // Clear background
+  ctx.clearRect(0, 0, 512, 512);
+
+  // 1. Roots Base at bottom
+  ctx.fillStyle = '#6D3F1B';
+  ctx.beginPath();
+  ctx.moveTo(170, 470);
+  ctx.quadraticCurveTo(256, 420, 342, 470);
+  ctx.lineTo(410, 500);
+  ctx.lineTo(102, 500);
+  ctx.closePath();
+  ctx.fill();
+
+  // 2. Trunk with Bark Texture
+  ctx.fillStyle = '#834C20';
+  ctx.beginPath();
+  ctx.moveTo(215, 460);
+  ctx.quadraticCurveTo(195, 340, 175, 250);
+  ctx.lineTo(337, 250);
+  ctx.quadraticCurveTo(317, 340, 297, 460);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bark Line Shading
+  ctx.strokeStyle = '#573010';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(235, 450); ctx.quadraticCurveTo(220, 350, 205, 270);
+  ctx.moveTo(277, 450); ctx.quadraticCurveTo(292, 350, 307, 270);
+  ctx.stroke();
+
+  // Hollow Tree Knot Hole (matching image)
+  ctx.fillStyle = '#3D2008';
+  ctx.beginPath();
+  ctx.ellipse(256, 370, 16, 24, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#6D3F1B';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // 3. Spreading Branches
+  ctx.lineWidth = 18;
+  ctx.strokeStyle = '#834C20';
+  ctx.beginPath();
+  ctx.moveTo(215, 270); ctx.quadraticCurveTo(150, 210, 100, 170);
+  ctx.moveTo(297, 270); ctx.quadraticCurveTo(362, 210, 412, 170);
+  ctx.stroke();
+
+  // 4. Scalloped Lush Green Foliage Cloud Canopy
+  const drawCloudPuff = (cx, cy, r, color, outlineColor) => {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = outlineColor || '#236017';
+    ctx.stroke();
+  };
+
+  // Base Darker Canopy Layer
+  drawCloudPuff(130, 210, 85, '#2D751E', '#1C4E13');
+  drawCloudPuff(382, 210, 85, '#2D751E', '#1C4E13');
+  drawCloudPuff(256, 220, 95, '#2D751E', '#1C4E13');
+
+  // Middle Main Green Canopy
+  drawCloudPuff(170, 150, 90, '#46AA2B', '#276817');
+  drawCloudPuff(342, 150, 90, '#46AA2B', '#276817');
+  drawCloudPuff(256, 130, 105, '#46AA2B', '#276817');
+
+  // Top Light Green Highlight Puffs (matching reference image)
+  drawCloudPuff(256, 85, 80, '#75E048', '#388F1F');
+  drawCloudPuff(200, 95, 70, '#86EC59', '#388F1F');
+  drawCloudPuff(312, 95, 70, '#86EC59', '#388F1F');
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+// --- Cartoon Tree Component ---
 function ReferenceCartoonTree({ position, scale = 1 }) {
   const groupRef = useRef();
-  // Load texture from public/cartoon_tree.png
-  const treeTexture = useTexture('/cartoon_tree.png');
+
+  // Create texture once in memory
+  const treeTexture = useMemo(() => getCartoonTreeTexture(), []);
 
   // Wind sway animation
   useFrame((state) => {
@@ -19,32 +105,29 @@ function ReferenceCartoonTree({ position, scale = 1 }) {
 
   return (
     <group position={position} scale={scale}>
-      {/* 3D Base Ground Shadow */}
+      {/* Ground Shadow */}
       <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ellipseGeometry args={[2.2, 1.4]} />
-        <meshBasicMaterial color="#2B522C" transparent opacity={0.5} />
+        <meshBasicMaterial color="#224422" transparent opacity={0.4} />
       </mesh>
 
-      {/* Front Facing Billboard Sprite (Main Image Match) */}
+      {/* Front Facing Billboard Sprite */}
       <group ref={groupRef} position={[0, 4.2, 0]}>
-        {/* Main Front Facing Tree Plane */}
         <mesh>
           <planeGeometry args={[7.5, 8.5]} />
           <meshBasicMaterial
             map={treeTexture}
             transparent={true}
-            alphaTest={0.4}
+            alphaTest={0.3}
             side={THREE.DoubleSide}
           />
         </mesh>
-
-        {/* Cross-Plane at 90 deg for 3D Volume */}
         <mesh rotation={[0, Math.PI / 2, 0]}>
           <planeGeometry args={[7.5, 8.5]} />
           <meshBasicMaterial
             map={treeTexture}
             transparent={true}
-            alphaTest={0.4}
+            alphaTest={0.3}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -70,7 +153,7 @@ export function VillageStage({ zOffset }) {
     const fenceList = [];
     const rockList = [];
 
-    // Dense lining of Reference Cartoon Trees matching user image!
+    // Dense lining of Cartoon Trees matching user reference image
     for (let i = 0; i < 26; i++) {
       const z = -i * 8;
       const side = i % 2 === 0 ? -1 : 1;
@@ -169,7 +252,7 @@ export function VillageStage({ zOffset }) {
         </mesh>
       </group>
 
-      {/* --- Render Reference Cartoon Trees (Matching Image 100%) --- */}
+      {/* --- Render Reference Cartoon Trees --- */}
       {trees.map((t, idx) => (
         <ReferenceCartoonTree key={idx} position={[t.side * t.xDist, 0, t.z]} scale={t.scale} />
       ))}

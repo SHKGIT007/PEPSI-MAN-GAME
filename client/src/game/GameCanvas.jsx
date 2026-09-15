@@ -284,7 +284,9 @@ export function GameCanvas(props) {
   return (
     <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
       <Canvas shadows camera={{ position: [0, 3.2, 5.5], fov: 60 }}>
-        <GameLoop {...props} />
+        <React.Suspense fallback={null}>
+          <GameLoop {...props} />
+        </React.Suspense>
       </Canvas>
     </div>
   );
