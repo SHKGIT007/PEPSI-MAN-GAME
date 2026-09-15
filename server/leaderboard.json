@@ -42,11 +42,27 @@
       "cans": 7,
       "stage": "Village",
       "date": "2026-09-15T11:40:42.704Z"
+    },
+    {
+      "name": "XXXX",
+      "score": 1058,
+      "distance": 109,
+      "cans": 4,
+      "stage": "Village",
+      "date": "2026-09-15T11:49:57.293Z"
+    },
+    {
+      "name": "XX",
+      "score": 1057,
+      "distance": 109,
+      "cans": 4,
+      "stage": "Village",
+      "date": "2026-09-15T11:49:52.208Z"
     }
   ],
   "globalStats": {
-    "totalGamesPlayed": 43,
-    "totalDistanceRun": 85582,
-    "totalCansCollected": 4897
+    "totalGamesPlayed": 45,
+    "totalDistanceRun": 85800,
+    "totalCansCollected": 4905
   }
 }

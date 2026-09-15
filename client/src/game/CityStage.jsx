@@ -1,115 +1,175 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 export function CityStage({ zOffset }) {
-  const cityScenery = useMemo(() => {
-    const items = [];
+  const neonGroupRef = useRef();
+
+  // Pulse neon billboards & streetlights
+  useFrame((state, delta) => {
+    const time = state.clock.elapsedTime;
+    if (neonGroupRef.current) {
+      neonGroupRef.current.children.forEach((child, i) => {
+        if (child.userData.isNeon) {
+          child.material.emissiveIntensity = 0.6 + Math.sin(time * 3 + i) * 0.4;
+        }
+      });
+    }
+  });
+
+  const { buildings, lamps, billboards, curbs } = useMemo(() => {
+    const bList = [];
+    const lList = [];
+    const bbList = [];
+    const cList = [];
+
     // Skyscrapers
-    for (let i = 0; i < 12; i++) {
-      const z = -i * 25;
-      const heightLeft = 20 + Math.random() * 25;
-      const heightRight = 20 + Math.random() * 25;
-      items.push({ type: 'building', side: -1, z, height: heightLeft, color: i % 2 === 0 ? '#1A1C29' : '#0F172A' });
-      items.push({ type: 'building', side: 1, z, height: heightRight, color: i % 2 === 0 ? '#0F172A' : '#1E1B4B' });
+    for (let i = 0; i < 14; i++) {
+      const z = -i * 22;
+      const heightL = 22 + Math.random() * 25;
+      const heightR = 22 + Math.random() * 25;
+      bList.push({ side: -1, z, height: heightL, color: i % 2 === 0 ? '#111526' : '#0B0D19', accent: i % 3 === 0 ? '#00F0FF' : '#FF007F' });
+      bList.push({ side: 1, z: z - 10, height: heightR, color: i % 2 === 0 ? '#0B0D19' : '#16192E', accent: i % 3 === 0 ? '#FF007F' : '#00F0FF' });
     }
-    // Street Lamps & Neon Billboards
-    for (let i = 0; i < 15; i++) {
-      const z = -i * 18;
-      items.push({ type: 'lamp', side: i % 2 === 0 ? -1 : 1, z });
-      if (i % 3 === 0) {
-        items.push({ type: 'billboard', side: i % 2 === 0 ? -1 : 1, z: z - 5 });
-      }
+
+    // Street Lamps
+    for (let i = 0; i < 16; i++) {
+      const z = -i * 16;
+      lList.push({ side: i % 2 === 0 ? -1 : 1, z });
     }
-    return items;
+
+    // Neon Overhead Billboards
+    for (let i = 0; i < 6; i++) {
+      const z = -i * 45 - 15;
+      bbList.push({ side: i % 2 === 0 ? -1 : 1, z, title: i % 2 === 0 ? 'PEPSI-MAN' : 'COOL REFRESH' });
+    }
+
+    // Curb Segments
+    for (let i = 0; i < 40; i++) {
+      const z = -i * 7.5;
+      cList.push({ z, isYellow: i % 2 === 0 });
+    }
+
+    return { buildings: bList, lamps: lList, billboards: bbList, curbs: cList };
   }, []);
 
   return (
     <group position={[0, 0, zOffset]}>
-      {/* Asphalt Highway Track */}
-      <mesh position={[0, -0.05, -100]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[10, 300]} />
-        <meshStandardMaterial color="#1A1A24" roughness={0.5} />
+      {/* --- Glossy Asphalt Highway Road --- */}
+      <mesh position={[0, -0.04, -100]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[9.6, 300]} />
+        <meshStandardMaterial color="#12131C" roughness={0.3} metalness={0.6} />
       </mesh>
 
-      {/* Yellow/White Highway Lane Lines */}
+      {/* --- Continuous Glowing Neon Highway Edge Strips --- */}
+      <mesh position={[-4.75, 0.05, -100]}>
+        <boxGeometry args={[0.15, 0.1, 300]} />
+        <meshBasicMaterial color="#00F0FF" />
+      </mesh>
+      <mesh position={[4.75, 0.05, -100]}>
+        <boxGeometry args={[0.15, 0.1, 300]} />
+        <meshBasicMaterial color="#FF007F" />
+      </mesh>
+
+      {/* --- Dashed Highway Center Markings --- */}
       {[-1.6, 1.6].map((xPos, idx) => (
         <group key={idx}>
           {Array.from({ length: 30 }).map((_, i) => (
             <mesh key={i} position={[xPos, 0.01, -i * 10]} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[0.2, 4]} />
-              <meshBasicMaterial color="#FFD700" />
+              <planeGeometry args={[0.22, 4.5]} />
+              <meshBasicMaterial color="#FFDD00" />
             </mesh>
           ))}
         </group>
       ))}
 
-      {/* Sidewalk Curbs */}
-      <mesh position={[-5.3, 0.1, -100]}>
-        <boxGeometry args={[0.6, 0.3, 300]} />
-        <meshStandardMaterial color="#333344" />
-      </mesh>
-      <mesh position={[5.3, 0.1, -100]}>
-        <boxGeometry args={[0.6, 0.3, 300]} />
-        <meshStandardMaterial color="#333344" />
-      </mesh>
+      {/* --- Alternating Yellow/Black Sidewalk Curbs --- */}
+      {curbs.map((c, idx) => (
+        <group key={idx}>
+          <mesh position={[-5.1, 0.08, c.z]}>
+            <boxGeometry args={[0.5, 0.22, 7.5]} />
+            <meshStandardMaterial color={c.isYellow ? '#FFD700' : '#222222'} roughness={0.6} />
+          </mesh>
+          <mesh position={[5.1, 0.08, c.z]}>
+            <boxGeometry args={[0.5, 0.22, 7.5]} />
+            <meshStandardMaterial color={c.isYellow ? '#FFD700' : '#222222'} roughness={0.6} />
+          </mesh>
+        </group>
+      ))}
 
-      {/* Scenery Objects */}
-      {cityScenery.map((item, idx) => {
-        if (item.type === 'building') {
-          const posX = item.side * 14;
+      {/* --- Skyscrapers with Neon Accents --- */}
+      <group ref={neonGroupRef}>
+        {buildings.map((b, idx) => {
+          const posX = b.side * 14.5;
           return (
-            <group key={idx} position={[posX, item.height / 2, item.z]}>
-              {/* Building Body */}
-              <mesh>
-                <boxGeometry args={[10, item.height, 12]} />
-                <meshStandardMaterial color={item.color} roughness={0.3} metalness={0.5} />
+            <group key={idx} position={[posX, b.height / 2, b.z]}>
+              {/* Main Building Structure */}
+              <mesh castShadow receiveShadow>
+                <boxGeometry args={[10.5, b.height, 12]} />
+                <meshStandardMaterial color={b.color} roughness={0.4} metalness={0.6} />
               </mesh>
-              {/* Glowing Neon Window Strips */}
-              <mesh position={[item.side * -4.9, 0, 0]}>
-                <boxGeometry args={[0.2, item.height - 4, 10]} />
-                <meshBasicMaterial color="#00F0FF" />
+
+              {/* Vertical Neon Light Ribbon */}
+              <mesh position={[b.side * -5.2, 0, 0]} userData={{ isNeon: true }}>
+                <boxGeometry args={[0.25, b.height - 2, 8]} />
+                <meshStandardMaterial color={b.accent} emissive={b.accent} emissiveIntensity={0.8} />
+              </mesh>
+
+              {/* Glowing Rooftop Antenna Beacon */}
+              <mesh position={[0, b.height / 2 + 2, 0]}>
+                <cylinderGeometry args={[0.08, 0.15, 4]} />
+                <meshStandardMaterial color="#888" />
+              </mesh>
+              <mesh position={[0, b.height / 2 + 4.1, 0]}>
+                <sphereGeometry args={[0.3, 8, 8]} />
+                <meshBasicMaterial color="#FF0044" />
               </mesh>
             </group>
           );
-        }
+        })}
 
-        if (item.type === 'lamp') {
-          const posX = item.side * 5.6;
+        {/* Street Lamps */}
+        {lamps.map((l, idx) => {
+          const posX = l.side * 5.5;
           return (
-            <group key={idx} position={[posX, 0, item.z]}>
-              {/* Lamp Post */}
-              <mesh position={[0, 2.5, 0]}>
-                <cylinderGeometry args={[0.1, 0.15, 5]} />
-                <meshStandardMaterial color="#555566" metalness={0.8} />
+            <group key={idx} position={[posX, 0, l.z]}>
+              {/* Lamp Post Pole */}
+              <mesh position={[0, 3, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.16, 6]} />
+                <meshStandardMaterial color="#444455" metalness={0.9} />
               </mesh>
-              {/* Glowing Lamp Head */}
-              <mesh position={[item.side * -0.4, 4.8, 0]}>
-                <sphereGeometry args={[0.3, 12, 12]} />
-                <meshBasicMaterial color="#FFDD55" />
+              {/* Lamp Arm Arc */}
+              <mesh position={[l.side * -0.4, 5.8, 0]}>
+                <boxGeometry args={[1.2, 0.12, 0.2]} />
+                <meshStandardMaterial color="#444455" />
+              </mesh>
+              {/* Glowing Lamp Head Bulb */}
+              <mesh position={[l.side * -0.8, 5.6, 0]} userData={{ isNeon: true }}>
+                <sphereGeometry args={[0.32, 12, 12]} />
+                <meshStandardMaterial color="#00F0FF" emissive="#00F0FF" emissiveIntensity={0.9} />
               </mesh>
             </group>
           );
-        }
+        })}
 
-        if (item.type === 'billboard') {
-          const posX = item.side * 8;
+        {/* Overhead Neon Billboards */}
+        {billboards.map((bb, idx) => {
+          const posX = bb.side * 8.5;
           return (
-            <group key={idx} position={[posX, 7, item.z]}>
-              <mesh>
-                <boxGeometry args={[6, 3, 0.4]} />
-                <meshStandardMaterial color="#0055FF" emissive="#0022AA" emissiveIntensity={0.8} />
+            <group key={idx} position={[posX, 8.5, bb.z]}>
+              <mesh castShadow>
+                <boxGeometry args={[7, 3.5, 0.4]} />
+                <meshStandardMaterial color="#0022AA" roughness={0.2} metalness={0.8} />
               </mesh>
-              {/* Billboard Glowing Pepsi Red stripe */}
-              <mesh position={[0, 0, 0.22]}>
-                <boxGeometry args={[5.5, 1, 0.1]} />
-                <meshBasicMaterial color="#E31B23" />
+              {/* Neon Frame */}
+              <mesh position={[0, 0, 0.22]} userData={{ isNeon: true }}>
+                <boxGeometry args={[6.6, 3.1, 0.08]} />
+                <meshStandardMaterial color="#E31B23" emissive="#E31B23" emissiveIntensity={0.8} />
               </mesh>
             </group>
           );
-        }
-
-        return null;
-      })}
+        })}
+      </group>
     </group>
   );
 }
